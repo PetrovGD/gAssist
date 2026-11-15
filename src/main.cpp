@@ -9,6 +9,7 @@
 #include <fonts/CourierCyr6.h>
 #include <NimBLEDevice.h>
 #include <NimBLEHIDDevice.h>
+#include <Bounce2.h>
 using namespace std;
 BLENotifications notifications; //Init ANCS
 NimBLECharacteristic *shutter = nullptr; //Helper for shutter function
@@ -28,12 +29,18 @@ bool advertiseAgain = false;
 #define BTN_LEFT 10
 #define BTN_RIGHT 6
 #define BTN_ENTER 3   //Pins for the buttons
-
+Bounce2::Button buttonUp;
+Bounce2::Button buttonDown;
+Bounce2::Button buttonLeft;
+Bounce2::Button buttonRight;
+Bounce2::Button buttonEnter;
 int previousSelectedItem=-1; //Used to check if there's a change in the selected item
 int selectedItem=0; //The item which the user has selected
 int activeMenu=0; //Which menu is displayed on the display
 int avaliableOptions = 0; //Used to know how many options are avaliable in the menu
 int page=0;
+int indexOfCallingNotification=0;
+
 string menuItems[2][2] = {{"Нотификации", "Camera Shutter"}}; //Items to a menu. When used menuItems[menu][itemId]
 
 int menuSelector[2][2] = {{1,0}}; //Menu to an item. When used menuSelector[menu][itemId] and returns the menu which the item should open
@@ -57,11 +64,10 @@ void setupHid(NimBLEServer *server){
   hid->setHidInfo(0x00,0x01);
   hid->setReportMap((uint8_t *)bleReportMap, sizeof(bleReportMap));
   hid->setBatteryLevel(67);
-  hid->setPnp(0xFFFF, 0xE502, 0xA111, 0x0210);
+  hid->setPnp(0xFF, 0xE502, 0xA111, 0x0210);
 } //Setuping up HID for shutter function
 
 void takeAPhoto(){
-  if (!shutter) { Serial.println("HID not set up"); return; }
   uint8_t down = 0x01, up = 0x00;
   shutter->setValue(&down, 1);
   shutter->notify();
@@ -71,10 +77,11 @@ void takeAPhoto(){
   delay(400);
 } //Shutter function
 
-void addMenuItem(string text, int x, int y, bool selected){
+void addMenuItem(string text, int x, int y, bool selected){ //Add horisontal scrolling text when selected
   bool isCyrl=false; //Checking if the notification is in cyrillic
   uint8_t firstByte = static_cast<uint8_t>(text.front()); //Getting the first byte because all cyrillic strings in cpp start with the same byte
   (firstByte==208 ? isCyrl=true : isCyrl=false);
+  
   if(selected){
   if(!isCyrl) display.fillRect(x, y-3, (7*text.size())+6, 20, WHITE); 
   else display.fillRect(x, y-3, (7*text.size()/2)+6, 20, WHITE); //Cyrillic strings are twice in size as latin
@@ -82,7 +89,19 @@ void addMenuItem(string text, int x, int y, bool selected){
   display.setTextColor(BLACK);
   display.print(text.c_str());
   }else {
-  
+    if(activeMenu==1) {
+  if(!isCyrl){
+  if(text.size()>13){
+    text.erase(13,text.npos);
+    text.append("...");
+  }
+}else {
+  if(text.size()>26){
+    text.erase(26,text.npos);
+    text.append("...");
+  }
+}
+    }
   display.setCursor(x+5,y+7);
   display.setTextColor(WHITE);
   display.print(text.c_str());
@@ -118,7 +137,7 @@ void displayNotificationMenuItems(){
       avaliableOptions=lengthOfItems;
       if(previousSelectedItem!=selectedItem && lengthOfItems!=0) {
       for(int i=0;i<lengthOfItems;i++){
-      
+
       addMenuItem(notificationsTitleList[i], 5, 20*(i+1)-(40*page), (selectedItem==i) ? 1 : 0);
       }//Check for changes in the selected item and update the display buffer
 
@@ -129,29 +148,73 @@ void displayNotificationMenuItems(){
 void notificationsMenu(){
   display.clearDisplay();
   // printText("Notifications", 5, 5, WHITE);
-   if(notificationsTitleList.empty()) printText("No new notifications", 10, 20, WHITE);
+   if(notificationsTitleList.empty()) printText("No new notifications", 10, 20, 1);
   displayNotificationMenuItems();
   
  // delay(100);
   
-  
 }//Notification menu
-int y=10;
+
+bool deleteAnItem=false;
+bool userSubmitted=false;
+void deleteNotificationMenu(){
+  printText("Delete the notification?", 15, 5, 1);
+  addMenuItem("Yes", 15, 40, deleteAnItem);
+  addMenuItem("No", 45, 40, !deleteAnItem);
+  if(buttonLeft.pressed() || buttonRight.pressed()){
+    deleteAnItem=!deleteAnItem; 
+    
+    //delay(300);
+  } 
+  if(buttonEnter.pressed()){
+    userSubmitted=true;
+    //delay(300);
+  } 
+  if(deleteAnItem && userSubmitted){
+  notificationsTitleList.erase(notificationsTitleList.begin()+selectedItem);
+ notificationsBodyList.erase(notificationsBodyList.begin()+selectedItem);
+ notificationsUUIDList.erase(notificationsUUIDList.begin()+selectedItem); //FIX problem with deletion 
+ activeMenu=1;
+ deleteAnItem=false;
+ userSubmitted=false;
+  }else if(!deleteAnItem && userSubmitted){
+     activeMenu=1;
+     deleteAnItem=false;
+     userSubmitted=false;
+  }
+}
+
+int yNotificationBody=10;
 void notificationBodyMenu(){
   display.clearDisplay();
   
-  addMenuItem(notificationsBodyList.at(selectedItem), 5, y, false);
-  if(digitalRead(BTN_DOWN)==LOW) y-=5;
-  if(digitalRead(BTN_UP)==LOW) y+=5;
+  addMenuItem(notificationsBodyList.at(selectedItem), 5, yNotificationBody, false);
+  if(buttonDown.pressed()) yNotificationBody-=5;
+  if(buttonUp.pressed()) yNotificationBody+=5;
+  if(buttonRight.pressed()){
+     deleteNotificationMenu();
+     activeMenu=4;
+  }
+  if(buttonLeft.pressed()) yNotificationBody=10;
 }
 
+
+void displayIncomingCall(){
+  display.clearDisplay();
+ 
+ // Serial.print(notificationsBodyList.at(indexOfCallingNotification+1));
+ addMenuItem(notificationsBodyList.at(indexOfCallingNotification-1), 5, 5, 0);
+ addMenuItem(("Caller: "+notificationsTitleList.at(indexOfCallingNotification-1)), 5, 20, 0);
+ addMenuItem("Press LEFT\n to decline", 5, 30, 0);
+  if(buttonLeft.pressed()) notifications.actionNegative(notificationsUUIDList.at(indexOfCallingNotification-1));
+}
 void mainMenu(){
   //Get length of items from the array for the specific active menu
-  printText("Main Menu", 5, 7, WHITE);
+  printText("Main Menu", 5, 7, 1);
     displayMainMenuItems();
   
 }//Main menu
-VoidArray menus[] = {mainMenu, notificationsMenu, notificationBodyMenu}; //Array for the avaliable menus
+VoidArray menus[] = {mainMenu, notificationsMenu, notificationBodyMenu, displayIncomingCall, deleteNotificationMenu}; //Array for the avaliable menus
 
 void updateDisplay() {
   display.clearDisplay();
@@ -168,24 +231,29 @@ void onBleStateChange(BLENotifications::State state){
 void onNotificationReceive(const ArduinoNotification *notification, const Notification *rawNotif){
   //const String title = String(notification->title);
   string title = rawNotif->title;
-  bool isCyrl=false;
-  uint8_t firstByte = static_cast<uint8_t>(title.front());
-  (firstByte==208 ? isCyrl=true : isCyrl=false);
-  if(!isCyrl){
-  if(title.size()>13){
-    title.erase(13,title.npos);
-    title.append("...");
-  }
-}else {
-  if(title.size()>26){
-    title.erase(26,title.npos);
-    title.append("...");
-  }
-}
-  if(!(notification->eventFlags & ANCS::EventFlagPreExisting)){
+  NotificationCategory category = notification->category;
+  
+  if(!(notification->eventFlags & ANCS::EventFlagPreExisting) && notification->category!=2){
      notificationsTitleList.push_back(title);
      notificationsUUIDList.push_back(rawNotif->uuid);
      notificationsBodyList.push_back(rawNotif->message);
+     Serial.println();
+     Serial.print("NEW: UUID: ");
+      // Serial.print(notificationsUUIDList[notificationsUUIDList.size()]);
+      Serial.print(notification->uuid);
+       Serial.print(" ; category: ");
+       Serial.print(rawNotif->category);
+       Serial.print("; Title: ");
+       Serial.print(notification->title);
+    // Serial.println(notification->title);
+   //  Serial.println(category);
+  }
+  if(category==1){
+    activeMenu=3;
+    // for(int i=0;i<notificationsUUIDList.size();i++){
+    // }
+    indexOfCallingNotification=notificationsUUIDList.size();
+   
   }
   // int lengthOfItems = sizeof(notificationsTitleList) / sizeof(notificationsTitleList[0]);
   // (lengthOfItems==1 ? notificationsTitleList[0] : notificationsTitleList[lengthOfItems-1]);
@@ -198,22 +266,29 @@ void onNotificationRemoved(const ArduinoNotification *notification, const Notifi
   string title = rawNotif->title;
   int index;
   for(int i=0;i<notificationsUUIDList.size();i++){
-    if(notificationsUUIDList[i]==rawNotif->uuid){
+    Serial.println();
+     Serial.print("OLD: UUID: ");
+      // Serial.print(notificationsUUIDList[notificationsUUIDList.size()]);
+      Serial.print(notification->uuid);
+       Serial.print(" ; category: ");
+       Serial.print(rawNotif->category);
+       Serial.print("; Title: ");
+       Serial.print(notification->title);
+    if(notificationsUUIDList[i]==rawNotif->uuid && notification->category!=2){
        index=i;
+       
+       if(activeMenu==2) activeMenu=1;
+       if(activeMenu==3) activeMenu=0;
+       notificationsTitleList.erase(notificationsTitleList.begin()+index);
+  
+ notificationsBodyList.erase(notificationsBodyList.begin()+index);
+ notificationsUUIDList.erase(notificationsUUIDList.begin()+index);
        break;
     }
   }
-  if(title.size()>13){
-    title.erase(13,title.npos);
-    title.append("...");
-  }
   selectedItem=0;
   page=0;
-
-  notificationsTitleList.erase(notificationsTitleList.begin()+index);
-  if(activeMenu==2) activeMenu=1;
-  notificationsBodyList.erase(notificationsBodyList.begin()+index);
- // notificationsTitleList.erase(remove(notificationsTitleList.begin(), notificationsTitleList.end(), title.c_str()), notificationsTitleList.end());
+  
 }
 
 void setup() {
@@ -229,19 +304,36 @@ void setup() {
     notifications.setRemovedCallback(onNotificationRemoved);
     
     notifications.begin("gA", setupHid);
-    pinMode(BTN_ENTER, INPUT_PULLUP); //Enter
-    pinMode(BTN_LEFT, INPUT_PULLUP); //Left
-    pinMode(BTN_UP, INPUT_PULLUP); //Up
-    pinMode(BTN_RIGHT, INPUT_PULLUP); //Right
-    pinMode(BTN_DOWN, INPUT_PULLUP); //Down
+    buttonEnter.attach(BTN_ENTER, INPUT_PULLUP); //Enter
+    buttonLeft.attach(BTN_LEFT, INPUT_PULLUP); //Left
+    buttonUp.attach(BTN_UP, INPUT_PULLUP); //Up
+    buttonRight.attach(BTN_RIGHT, INPUT_PULLUP); //Right
+    buttonDown.attach(BTN_DOWN, INPUT_PULLUP); //Down
+    
+    buttonEnter.interval(25);
+    buttonLeft.interval(25);
+    buttonUp.interval(25);
+    buttonRight.interval(25);
+    buttonDown.interval(25);
+
+    buttonEnter.setPressedState(LOW);
+    buttonLeft.setPressedState(LOW);
+    buttonUp.setPressedState(LOW);
+    buttonRight.setPressedState(LOW);
+    buttonDown.setPressedState(LOW);
   // put your setup code here, to run once:
  
 }
 
 void loop() {
+    buttonEnter.update();
+    buttonLeft.update();
+    buttonUp.update();
+    buttonRight.update();
+    buttonDown.update();
   if(!advertiseAgain) notifications.startAdvertising();
   updateDisplay(); //Refresh the display's buffer
-  if(digitalRead(BTN_ENTER)==0){
+  if(buttonEnter.pressed()){
 
     switch(activeMenu){
       case 0:
@@ -257,14 +349,14 @@ void loop() {
         break;
     }
 
-    delay(100); 
-  }else if( digitalRead(BTN_UP)==LOW){
+   // delay(100); 
+  }else if( buttonUp.pressed()){
    if(selectedItem>0 && selectedItem<=avaliableOptions){
     if(selectedItem%2==0 && selectedItem!=0) page--;
      if(activeMenu!=2) selectedItem=selectedItem-1;
     }
-    delay(100);
-  }else if( digitalRead(BTN_DOWN)==LOW){
+   // delay(100);
+  }else if( buttonDown.pressed()){
 
    // ( selectedItem>1 ? selectedItem++ : selectedItem--);
     if(selectedItem>=0 && selectedItem<avaliableOptions-1){
@@ -272,18 +364,17 @@ void loop() {
      if(activeMenu!=2) selectedItem=selectedItem+1;
 
     }
-    delay(100);
-  }else if( digitalRead(BTN_LEFT)==LOW){
+    //delay(100);
+  }else if( buttonLeft.pressed()){
 
    // ( selectedItem>1 ? selectedItem++ : selectedItem--);
-    if(activeMenu>0) activeMenu--;
-    delay(100);
+    if(activeMenu>0 && activeMenu!=3 && activeMenu!=4) activeMenu--;
+   // delay(100);
   }
-  else if( digitalRead(BTN_RIGHT)==LOW){
+  else if( buttonRight.pressed()){
 
    // ( selectedItem>1 ? selectedItem++ : selectedItem--);
-    takeAPhoto();
-    delay(500);
+    
   }
   // put your main code here, to run repeatedly:
 }
