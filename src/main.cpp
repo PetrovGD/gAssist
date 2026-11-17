@@ -10,15 +10,11 @@
 #include <NimBLEDevice.h>
 #include <NimBLEHIDDevice.h>
 #include <Bounce2.h>
+#include "bleReportMap.h"
 using namespace std;
 BLENotifications notifications; //Init ANCS
 NimBLECharacteristic *shutter = nullptr; //Helper for shutter function
-static const uint8_t bleReportMap[] = {
-  0x05, 0x0C, 0x09, 0x01, 0xA1, 0x01, 0x85, 0x01,
-  0x15, 0x00, 0x25, 0x01, 0x75, 0x01, 0x95, 0x02,
-  0x09, 0xE9, 0x09, 0xEA, 0x81, 0x02,
-  0x95, 0x06, 0x81, 0x03, 0xC0
-}; //HID report map
+
 
 bool advertiseAgain = false;
 
@@ -37,11 +33,12 @@ Bounce2::Button buttonEnter;
 int previousSelectedItem=-1; //Used to check if there's a change in the selected item
 int selectedItem=0; //The item which the user has selected
 int activeMenu=0; //Which menu is displayed on the display
+int previousMenu=0;
 int avaliableOptions = 0; //Used to know how many options are avaliable in the menu
 int page=0;
 int indexOfCallingNotification=0;
 
-string menuItems[2][2] = {{"Нотификации", "Camera Shutter"}}; //Items to a menu. When used menuItems[menu][itemId]
+string menuItems[2][3] = {{"Нотификации", "Camera Shutter", "Media control"}}; //Items to a menu. When used menuItems[menu][itemId]
 
 int menuSelector[2][2] = {{1,0}}; //Menu to an item. When used menuSelector[menu][itemId] and returns the menu which the item should open
 std::vector <std::string> notificationsTitleList = {}; //Vector for title of received notifications
@@ -57,6 +54,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1); //Init display
 // #define OLED_RESET 6
 // Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS);
 
+//Setuping up HID for shutter function
 void setupHid(NimBLEServer *server){
   auto *hid = new NimBLEHIDDevice(server);
   shutter = hid->getInputReport(1);
@@ -65,7 +63,7 @@ void setupHid(NimBLEServer *server){
   hid->setReportMap((uint8_t *)bleReportMap, sizeof(bleReportMap));
   hid->setBatteryLevel(67);
   hid->setPnp(0xFF, 0xE502, 0xA111, 0x0210);
-} //Setuping up HID for shutter function
+} 
 
 void takeAPhoto(){
   uint8_t down = 0x01, up = 0x00;
@@ -76,7 +74,15 @@ void takeAPhoto(){
   shutter->notify();
   delay(400);
 } //Shutter function
-
+// void playPause(){
+//   uint8_t playButton = 0x04;
+//   uint8_t release = 0x00;
+//   shutter->setValue(&playButton, 1);
+//   shutter->notify();
+//   delay(20);
+//   shutter->setValue(&release, 1);
+//   shutter->notify();
+// }
 void addMenuItem(string text, int x, int y, bool selected){ //Add horisontal scrolling text when selected
   bool isCyrl=false; //Checking if the notification is in cyrillic
   uint8_t firstByte = static_cast<uint8_t>(text.front()); //Getting the first byte because all cyrillic strings in cpp start with the same byte
@@ -123,7 +129,7 @@ void displayMainMenuItems(){
       if(previousSelectedItem!=selectedItem && lengthOfItems!=0) {
       for(int i=0;i<lengthOfItems;i++){
       
-      addMenuItem(menuItems[activeMenu][i], 5, 20*(i+1), (selectedItem==i) ? 1 : 0);
+      addMenuItem(menuItems[activeMenu][i], 5, 20*(i+1)-(40*page), (selectedItem==i) ? 1 : 0);
       }//Check for changes in the selected item and update the display buffer
 
     }
@@ -210,14 +216,92 @@ void displayIncomingCall(){
 }
 void mainMenu(){
   //Get length of items from the array for the specific active menu
-  printText("Main Menu", 5, 7, 1);
+ if(page==0) printText("Main Menu", 5, 7, 1);
     displayMainMenuItems();
   
 }//Main menu
-VoidArray menus[] = {mainMenu, notificationsMenu, notificationBodyMenu, displayIncomingCall, deleteNotificationMenu}; //Array for the avaliable menus
+
+void mediaControlMenu(){
+  avaliableOptions=4;
+  switch(selectedItem){
+    case 0:
+      addMenuItem("<<", 20, 40, 1);
+      display.setFont();
+      addMenuItem("", 45, 35, 0);
+      display.setFont(&CourierCyr6pt8b);
+      addMenuItem(">>", 60, 40, 0);
+      addMenuItem("back", 85, 40, 0);
+      if(buttonEnter.pressed()){
+        uint8_t previous = 0x02;
+        uint8_t release = 0x00;
+        shutter->setValue(&previous, 1);
+        shutter->notify();
+        delay(20);
+        shutter->setValue(&release, 1);
+        shutter->notify();
+      } 
+      break;
+    case 1:
+      addMenuItem(">>", 60, 40, 0);
+      addMenuItem("<<", 20, 40, 0);
+      display.setFont();
+      addMenuItem("", 45, 35, 1);
+      display.setFont(&CourierCyr6pt8b);
+      addMenuItem("back", 85, 40, 0);
+      if(buttonEnter.pressed()){
+        uint8_t playButton = 0x08;
+        uint8_t release = 0x00;
+        shutter->setValue(&playButton, 1);
+        shutter->notify();
+        delay(20);
+        shutter->setValue(&release, 1);
+        shutter->notify();
+      }
+      break;
+    case 2:
+      addMenuItem("<<", 20, 40, 0);
+      addMenuItem(">>", 60, 40, 1);
+      display.setFont();
+      addMenuItem("", 45, 35, 0);
+      display.setFont(&CourierCyr6pt8b);
+      addMenuItem("back", 85, 40, 0);
+      if(buttonEnter.pressed()){
+        uint8_t next = 0x04;
+        uint8_t release = 0x00;
+        shutter->setValue(&next, 1);
+        shutter->notify();
+        delay(20);
+        shutter->setValue(&release, 1);
+        shutter->notify();
+      } 
+      break;
+    case 3:
+      addMenuItem("<<", 20, 40, 0);
+      addMenuItem(">>", 60, 40, 0);
+      display.setFont();
+      addMenuItem("", 45, 35, 0);
+      display.setFont(&CourierCyr6pt8b);
+      addMenuItem("back", 85, 40, 1);
+      if(buttonEnter.pressed()){
+
+        activeMenu=0;
+      }
+      break;
+  }
+
+
+
+}
+
+VoidArray menus[] = {mainMenu, notificationsMenu, notificationBodyMenu, displayIncomingCall, deleteNotificationMenu, mediaControlMenu}; //Array for the avaliable menus
 
 void updateDisplay() {
   display.clearDisplay();
+  if(previousMenu!=activeMenu){
+    page=0;
+    selectedItem=0;
+    previousMenu=activeMenu;
+  }
   menus[activeMenu]();
    display.display();
 }//It refreshes the display with the new information about the menus
@@ -337,8 +421,19 @@ void loop() {
 
     switch(activeMenu){
       case 0:
-          activeMenu=menuSelector[activeMenu][selectedItem];
+         // activeMenu=menuSelector[activeMenu][selectedItem];
           if(selectedItem==1) takeAPhoto();
+          switch (selectedItem){
+            case 0:
+              activeMenu=1;
+              break;
+            case 1:
+              takeAPhoto;
+              break;
+            case 2:
+              activeMenu=5;
+              break;
+          }
           if(activeMenu!=0){
           selectedItem=0;
          page=0;
@@ -347,8 +442,8 @@ void loop() {
       case 1:
         if(avaliableOptions!=0) activeMenu=2;
         break;
-    }
-
+    
+  }
    // delay(100); 
   }else if( buttonUp.pressed()){
    if(selectedItem>0 && selectedItem<=avaliableOptions){
@@ -368,12 +463,18 @@ void loop() {
   }else if( buttonLeft.pressed()){
 
    // ( selectedItem>1 ? selectedItem++ : selectedItem--);
-    if(activeMenu>0 && activeMenu!=3 && activeMenu!=4) activeMenu--;
-   // delay(100);
+    if(activeMenu>0 && activeMenu!=3 && activeMenu!=4 && activeMenu!=5) activeMenu--;
+    if(selectedItem>0 && selectedItem<=avaliableOptions && activeMenu==5){ 
+        selectedItem=selectedItem-1;
+    }
   }
   else if( buttonRight.pressed()){
 
    // ( selectedItem>1 ? selectedItem++ : selectedItem--);
+        
+     if(selectedItem>=0 && selectedItem<avaliableOptions-1 && activeMenu==5){ 
+        selectedItem=selectedItem+1;
+    }
     
   }
   // put your main code here, to run repeatedly:
