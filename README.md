@@ -15,22 +15,22 @@
 ## Screenshots of the project
 
 ### PCB design
-![Screenshot of the pcb design](https://github.com/PetrovGD/gAssist/blob/main/pcb.png?raw=true)
+![Screenshot of the pcb design](https://raw.githubusercontent.com/PetrovGD/gAssist/refs/heads/master/pcb.png)
 
 ### Schematic
-![Screenshot of the schematic design](https://github.com/PetrovGD/gAssist/blob/main/schematic.png?raw=true)
+![Screenshot of the schematic design](https://raw.githubusercontent.com/PetrovGD/gAssist/refs/heads/master/schematic.png)
 
 ## Demo of the project
 
 ### Overview of menus
-* ![Overview of menus](https://youtu.be/tBosUBp-U7k)
+* https://youtu.be/tBosUBp-U7k
    
 
 ### Overview of notifcation menu
-*  ![Overview of notifcation menu](https://youtu.be/h5D4cYwPhq4)
+*  https://youtu.be/h5D4cYwPhq4
 
 ### Demo of media control
-* ![Demo of media control](https://youtu.be/3CNltpzKNEg)
+* https://youtu.be/3CNltpzKNEg
 
 ### Demo of remote camera shutter
-* ![Demo of remote camera shutter](https://youtu.be/_CQfvp7ikwA)
+* https://youtu.be/_CQfvp7ikwA
