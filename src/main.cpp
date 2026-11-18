@@ -38,7 +38,7 @@ int avaliableOptions = 0; //Used to know how many options are avaliable in the m
 int page=0;
 int indexOfCallingNotification=0;
 
-string menuItems[2][3] = {{"Нотификации", "Camera Shutter", "Media control"}}; //Items to a menu. When used menuItems[menu][itemId]
+string menuItems[2][3] = {{"Notifications", "Camera Shutter", "Media control"}}; //Items to a menu. When used menuItems[menu][itemId]
 
 int menuSelector[2][2] = {{1,0}}; //Menu to an item. When used menuSelector[menu][itemId] and returns the menu which the item should open
 std::vector <std::string> notificationsTitleList = {}; //Vector for title of received notifications
@@ -283,8 +283,7 @@ void mediaControlMenu(){
       display.setFont(&CourierCyr6pt8b);
       addMenuItem("back", 85, 40, 1);
       if(buttonEnter.pressed()){
-
-        activeMenu=0;
+          activeMenu=0;
       }
       break;
   }
@@ -298,9 +297,14 @@ VoidArray menus[] = {mainMenu, notificationsMenu, notificationBodyMenu, displayI
 void updateDisplay() {
   display.clearDisplay();
   if(previousMenu!=activeMenu){
+    if(previousMenu!=1){
     page=0;
     selectedItem=0;
     previousMenu=activeMenu;
+    }
+     else {
+       previousMenu=activeMenu;
+     }
   }
   menus[activeMenu]();
    display.display();
@@ -370,7 +374,7 @@ void onNotificationRemoved(const ArduinoNotification *notification, const Notifi
        break;
     }
   }
-  selectedItem=0;
+ // selectedItem=0;
   page=0;
   
 }
@@ -435,7 +439,7 @@ void loop() {
               break;
           }
           if(activeMenu!=0){
-          selectedItem=0;
+        //  selectedItem=0;
          page=0;
           }
         break;
@@ -463,7 +467,11 @@ void loop() {
   }else if( buttonLeft.pressed()){
 
    // ( selectedItem>1 ? selectedItem++ : selectedItem--);
-    if(activeMenu>0 && activeMenu!=3 && activeMenu!=4 && activeMenu!=5) activeMenu--;
+    if(activeMenu>0 && activeMenu!=3 && activeMenu!=4 && activeMenu!=5){
+       activeMenu--;
+        page=0;
+        selectedItem=0;
+    }
     if(selectedItem>0 && selectedItem<=avaliableOptions && activeMenu==5){ 
         selectedItem=selectedItem-1;
     }
