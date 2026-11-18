@@ -34,3 +34,5 @@
 
 ### Demo of remote camera shutter
 * https://youtu.be/_CQfvp7ikwA
+
+## The enclosure of gAssist is still unfinished so it's not uploaded here. 
