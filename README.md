@@ -1,7 +1,7 @@
 
 # gAssist (WIP)
 
-### gAssist is a portable device, which connects to your phone and give you the most important information. It include functions as:
+### gAssist is a portable device, which connects to your phone and gives you the most important information. It include functions as:
 
 * Reading notifications from smartphone
 * Taking pictures from the smartphone using gAssist (Remote Camera Shutter)
