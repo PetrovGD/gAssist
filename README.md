@@ -8,9 +8,28 @@
 * Controlling media, running on the phone (Media Controller with previous track, play/pause and next track)
 * ...more in future versions
 
+## Description
+ - gAssist is an ESP32-C3 based device, utilising a 0.96inch SSD1306 OLED display for displaying menus and information. It is controlled using 5 push buttons (up, down, left, right and enter) which control menus on the display. You can use it to read your notifications, without touching your phone (This option is currently only supported on iOS); Control running media by using the Media Control menu, take photos without the need of running back to your phone using the Remote Camera shutter.
+ - More functionalities are planned to be implemented.
+ - It will have a 3D printed enclosure which is going to be portable and small, so you can hide it in your pocket.
+
+## BOM (Bill of Materials)
+ - 1pcs ESP32-C3 (Other ESP32s could be used probably, but I haven't tested yet)
+ - 1 pcs SSD1306 0.96inch OLED display
+ - 5pcs push-buttons
+ - 1 pcs custom PCB or breadboard
+
+## Short build guide
+ - You can use the schematic below to connect the parts together on a breadboard
+ - You can also use the PCB provided or create your own PCB
+ - The program is coded using the Arduino framework in Platform.IO
+ - All the libraries required are written in platformio.ini
+ - ESP32-ANCS library is modified for the use of this project and is provided as a ZIP in the repo
+
 ## Planned implementations
  - Presentation controller
  - Volume control
+ - Notifications on Android
 
 ## Screenshots of the project
 
