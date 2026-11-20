@@ -7,6 +7,7 @@
 * Taking pictures from the smartphone using gAssist (Remote Camera Shutter)
 * Controlling media, running on the phone (Media Controller with previous track, play/pause and next track)
 * Controlling presentations (Presentation controller with Previous slide, next slide, start and end slideshow)
+* Control volume (Volume Control)
 * ...more in future versions
 
 ## Description
