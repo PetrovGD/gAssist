@@ -11,10 +11,11 @@
 #include <NimBLEHIDDevice.h>
 #include <Bounce2.h>
 #include "bleReportMap.h"
+#include "fonts/Picopixel.h"
 using namespace std;
 BLENotifications notifications; //Init ANCS
-NimBLECharacteristic *shutter = nullptr; //Helper for shutter function
-
+NimBLECharacteristic *consumerControl = nullptr; //Characteristic for consumerControl function
+NimBLECharacteristic *keyboardControl = nullptr; //Characteristic for consumerControl function
 
 bool advertiseAgain = false;
 
@@ -38,7 +39,7 @@ int avaliableOptions = 0; //Used to know how many options are avaliable in the m
 int page=0;
 int indexOfCallingNotification=0;
 
-string menuItems[2][3] = {{"Notifications", "Camera Shutter", "Media control"}}; //Items to a menu. When used menuItems[menu][itemId]
+string menuItems[2][4] = {{"Notifications", "Camera Shutter", "Media control", "Presentation Mode"}}; //Items to a menu. When used menuItems[menu][itemId]
 
 int menuSelector[2][2] = {{1,0}}; //Menu to an item. When used menuSelector[menu][itemId] and returns the menu which the item should open
 std::vector <std::string> notificationsTitleList = {}; //Vector for title of received notifications
@@ -54,10 +55,11 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1); //Init display
 // #define OLED_RESET 6
 // Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS);
 
-//Setuping up HID for shutter function
+//Setuping up HID for consumerControl function
 void setupHid(NimBLEServer *server){
   auto *hid = new NimBLEHIDDevice(server);
-  shutter = hid->getInputReport(1);
+  consumerControl = hid->getInputReport(1);
+  keyboardControl = hid->getInputReport(2);
   hid->setManufacturer("GP");
   hid->setHidInfo(0x00,0x01);
   hid->setReportMap((uint8_t *)bleReportMap, sizeof(bleReportMap));
@@ -66,23 +68,16 @@ void setupHid(NimBLEServer *server){
 } 
 
 void takeAPhoto(){
-  uint8_t down = 0x01, up = 0x00;
-  shutter->setValue(&down, 1);
-  shutter->notify();
+  uint8_t down = 0x01;
+  uint8_t up = 0x00;
+  consumerControl->setValue(&down, 1);
+  consumerControl->notify();
   delay(20);
-  shutter->setValue(&up, 1);
-  shutter->notify();
+  consumerControl->setValue(&up, 1);
+  consumerControl->notify();
   delay(400);
 } //Shutter function
-// void playPause(){
-//   uint8_t playButton = 0x04;
-//   uint8_t release = 0x00;
-//   shutter->setValue(&playButton, 1);
-//   shutter->notify();
-//   delay(20);
-//   shutter->setValue(&release, 1);
-//   shutter->notify();
-// }
+
 void addMenuItem(string text, int x, int y, bool selected){ //Add horisontal scrolling text when selected
   bool isCyrl=false; //Checking if the notification is in cyrillic
   uint8_t firstByte = static_cast<uint8_t>(text.front()); //Getting the first byte because all cyrillic strings in cpp start with the same byte
@@ -156,6 +151,7 @@ void notificationsMenu(){
   // printText("Notifications", 5, 5, WHITE);
    if(notificationsTitleList.empty()) printText("No new notifications", 10, 20, 1);
   displayNotificationMenuItems();
+  if(buttonLeft.pressed()) activeMenu=0;
   
  // delay(100);
   
@@ -234,11 +230,11 @@ void mediaControlMenu(){
       if(buttonEnter.pressed()){
         uint8_t previous = 0x02;
         uint8_t release = 0x00;
-        shutter->setValue(&previous, 1);
-        shutter->notify();
+        consumerControl->setValue(&previous, 1);
+        consumerControl->notify();
         delay(20);
-        shutter->setValue(&release, 1);
-        shutter->notify();
+        consumerControl->setValue(&release, 1);
+        consumerControl->notify();
       } 
       break;
     case 1:
@@ -251,11 +247,11 @@ void mediaControlMenu(){
       if(buttonEnter.pressed()){
         uint8_t playButton = 0x08;
         uint8_t release = 0x00;
-        shutter->setValue(&playButton, 1);
-        shutter->notify();
+        consumerControl->setValue(&playButton, 1);
+        consumerControl->notify();
         delay(20);
-        shutter->setValue(&release, 1);
-        shutter->notify();
+        consumerControl->setValue(&release, 1);
+        consumerControl->notify();
       }
       break;
     case 2:
@@ -268,11 +264,11 @@ void mediaControlMenu(){
       if(buttonEnter.pressed()){
         uint8_t next = 0x04;
         uint8_t release = 0x00;
-        shutter->setValue(&next, 1);
-        shutter->notify();
+        consumerControl->setValue(&next, 1);
+        consumerControl->notify();
         delay(20);
-        shutter->setValue(&release, 1);
-        shutter->notify();
+        consumerControl->setValue(&release, 1);
+        consumerControl->notify();
       } 
       break;
     case 3:
@@ -282,9 +278,7 @@ void mediaControlMenu(){
       addMenuItem("", 45, 35, 0);
       display.setFont(&CourierCyr6pt8b);
       addMenuItem("back", 85, 40, 1);
-      if(buttonEnter.pressed()){
-          activeMenu=0;
-      }
+      
       break;
   }
 
@@ -292,7 +286,45 @@ void mediaControlMenu(){
 
 }
 
-VoidArray menus[] = {mainMenu, notificationsMenu, notificationBodyMenu, displayIncomingCall, deleteNotificationMenu, mediaControlMenu}; //Array for the avaliable menus
+void presentationControlMenu(){
+  addMenuItem("Use left and right to control. Enter to exit. Up to exit slideshow. Down to enter", 0, 3, 0);
+  if(buttonLeft.pressed()){
+     const uint8_t leftArrowKey = 0x02;
+     const uint8_t release = 0x00;
+      keyboardControl->setValue(&leftArrowKey, 1);
+      keyboardControl->notify();
+      keyboardControl->setValue(&release, 1);
+      keyboardControl->notify();
+  }
+  if(buttonRight.pressed()){
+     const uint8_t rightArrowKey = 0x01;
+     const uint8_t release = 0x00;
+      keyboardControl->setValue(&rightArrowKey, 1);
+      keyboardControl->notify();
+      keyboardControl->setValue(&release, 1);
+      keyboardControl->notify();
+  }
+  if(buttonUp.pressed()){
+     const uint8_t exitSlideShow = 0x08;
+     const uint8_t release = 0x00;
+      keyboardControl->setValue(&exitSlideShow, 1);
+      keyboardControl->notify();
+      keyboardControl->setValue(&release, 1);
+      keyboardControl->notify();
+  }
+  if(buttonDown.pressed()){
+     const uint8_t enterSlideShow = 0x04;
+     const uint8_t release = 0x00;
+      keyboardControl->setValue(&enterSlideShow, 1);
+      keyboardControl->notify();
+      keyboardControl->setValue(&release, 1);
+      keyboardControl->notify();
+  }
+  
+
+}
+
+VoidArray menus[] = {mainMenu, notificationsMenu, notificationBodyMenu, displayIncomingCall, deleteNotificationMenu, mediaControlMenu, presentationControlMenu}; //Array for the avaliable menus
 
 void updateDisplay() {
   display.clearDisplay();
@@ -437,6 +469,9 @@ void loop() {
             case 2:
               activeMenu=5;
               break;
+            case 3:
+              activeMenu=6;
+              break;
           }
           if(activeMenu!=0){
         //  selectedItem=0;
@@ -446,6 +481,16 @@ void loop() {
       case 1:
         if(avaliableOptions!=0) activeMenu=2;
         break;
+      case 5:
+          if(selectedItem==3){
+          selectedItem=0;
+          activeMenu=0;
+          break;
+        }
+        case 6:
+          selectedItem=0;
+          activeMenu=0;
+          break;
     
   }
    // delay(100); 
@@ -467,8 +512,8 @@ void loop() {
   }else if( buttonLeft.pressed()){
 
    // ( selectedItem>1 ? selectedItem++ : selectedItem--);
-    if(activeMenu>0 && activeMenu!=3 && activeMenu!=4 && activeMenu!=5){
-       activeMenu--;
+    if(activeMenu>0 && activeMenu!=3 && activeMenu!=4 && activeMenu!=5 && activeMenu!=6){
+       activeMenu==0;
         page=0;
         selectedItem=0;
     }
