@@ -219,6 +219,7 @@ void mainMenu(){
 
 void mediaControlMenu(){
   avaliableOptions=4;
+  addMenuItem("Up for V+\nDown for V-", 10, 10, 0);
   switch(selectedItem){
     case 0:
       addMenuItem("<<", 20, 40, 1);
@@ -278,8 +279,25 @@ void mediaControlMenu(){
       addMenuItem("", 45, 35, 0);
       display.setFont(&CourierCyr6pt8b);
       addMenuItem("back", 85, 40, 1);
-      
       break;
+  }
+  const uint8_t released = 0x00;
+  if(buttonUp.pressed()){
+    const uint8_t volumeUp = 0x01;
+    
+    consumerControl->setValue(&volumeUp, 1);
+    consumerControl->notify();
+    consumerControl->setValue(&released, 1);
+    consumerControl->notify();
+  }
+
+  if(buttonDown.pressed()){
+    const uint8_t volumeDown = 0x10;
+    
+    consumerControl->setValue(&volumeDown, 1);
+    consumerControl->notify();
+    consumerControl->setValue(&released, 1);
+    consumerControl->notify();
   }
 
 
@@ -485,17 +503,17 @@ void loop() {
           if(selectedItem==3){
           selectedItem=0;
           activeMenu=0;
-          break;
         }
-        case 6:
-          selectedItem=0;
-          activeMenu=0;
-          break;
+        break;
+      case 6:
+        selectedItem=0;
+        activeMenu=0;
+        break;
     
   }
    // delay(100); 
   }else if( buttonUp.pressed()){
-   if(selectedItem>0 && selectedItem<=avaliableOptions){
+   if(selectedItem>0 && selectedItem<=avaliableOptions && activeMenu!=5){
     if(selectedItem%2==0 && selectedItem!=0) page--;
      if(activeMenu!=2) selectedItem=selectedItem-1;
     }
@@ -503,7 +521,7 @@ void loop() {
   }else if( buttonDown.pressed()){
 
    // ( selectedItem>1 ? selectedItem++ : selectedItem--);
-    if(selectedItem>=0 && selectedItem<avaliableOptions-1){
+    if(selectedItem>=0 && selectedItem<avaliableOptions-1 && activeMenu!=5){
       if(selectedItem%2!=0 && selectedItem!=0) page++;
      if(activeMenu!=2) selectedItem=selectedItem+1;
 
