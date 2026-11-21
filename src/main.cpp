@@ -11,7 +11,6 @@
 #include <NimBLEHIDDevice.h>
 #include <Bounce2.h>
 #include "bleReportMap.h"
-#include "fonts/Picopixel.h"
 using namespace std;
 BLENotifications notifications; //Init ANCS
 NimBLECharacteristic *consumerControl = nullptr; //Characteristic for consumerControl function
