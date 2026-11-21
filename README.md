@@ -29,8 +29,6 @@
  - ESP32-ANCS library is modified for the use of this project and is provided as a ZIP in the repo
 
 ## Planned implementations
- - Presentation controller
- - Volume control
  - Notifications on Android
 
 ## Screenshots of the project
