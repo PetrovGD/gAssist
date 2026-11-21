@@ -58,19 +58,3 @@
 
 ## The enclosure of gAssist is still unfinished so it's not uploaded here. 
 
-## License & Attribution
-
-This project is open source and requires **explicit attribution to this original repository** (`https://github.com/PetrovGD/gAssist`) for any reuse, redistribution, or derivative work:
-
-* **Firmware (`src/`):** Licensed under the **GNU General Public License v3.0 (GNU GPLv3)** — see the [`LICENSE-CODE`](./LICENSE-CODE) file for details. Any derivative software must retain copyright notices, credit this repository, and be released under GNU GPLv3.
-* **PCB & Schematics (`hardware/`):** Licensed under the **CERN Open Hardware Licence Version 2 - Strongly Reciprocal (CERN-OHL-S-2.0)** — see the [`LICENSE-HARDWARE`](./LICENSE-HARDWARE) file for details. Anyone copying, modifying, or manufacturing these hardware designs must credit this original repository and release any modified designs under CERN-OHL-S-2.0.
-
-### Third-Party Libraries & Credits
-
-* **[ESP32 BLE ANCS Notifications](https://github.com/ShiveStar/ESP32-ANCS-Notifications-Fixed/)** — Licensed under **GNU GPL-3.0**. This repository includes a modified version in `lib/` updated by me to add BLE HID support.
-* **[Adafruit SSD1306](https://github.com/adafruit/Adafruit_SSD1306)** — Licensed under the **BSD License** (Copyright © Adafruit Industries).
-* **[Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library)** — Licensed under the **BSD License** (Copyright © Adafruit Industries).
-* **[NimBLE-Arduino](https://github.com/h2zero/NimBLE-Arduino)** — Licensed under the **Apache License 2.0**.
-* **[Bounce2](https://github.com/thomasfredericks/Bounce2)** — Licensed under the **MIT License**.
-* **[AdafruitGFXRusFonts](https://github.com/immortalserg/AdafruitGFXRusFonts)** — Not licensed. Used for adding support for Cyrillic letters
-
