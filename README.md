@@ -44,7 +44,6 @@
 ### Overview of menus
 * https://youtu.be/tBosUBp-U7k
    
-
 ### Overview of notifcation menu
 *  https://youtu.be/h5D4cYwPhq4
 
@@ -53,6 +52,12 @@
 
 ### Demo of remote camera shutter
 * https://youtu.be/_CQfvp7ikwA
+
+### Overview of new functionalities added to gAssist (Volume control and Presentation Control)
+* https://youtu.be/w5ZUXPo0fjg
+
+### Demo of presentation control on gAssist
+* https://youtu.be/Z9RXJxisC2w
 
 ## The enclosure of gAssist is still unfinished so it's not uploaded here. 
 
