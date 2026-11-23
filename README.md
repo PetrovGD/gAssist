@@ -56,11 +56,11 @@
 ### Overview of new functionalities added to gAssist (Volume control and Presentation Control)
 * https://youtu.be/w5ZUXPo0fjg
 
-### Compiled binary of latest working version 
-* https://github.com/PetrovGD/gAssist/releases/download/releases/firmware.bin
-
 ### Demo of presentation control on gAssist
 * https://youtu.be/Z9RXJxisC2w
+
+### Compiled binary of latest working version 
+* https://github.com/PetrovGD/gAssist/releases/download/releases/firmware.bin
 
 ## The enclosure of gAssist is still unfinished so it's not uploaded here. 
 
