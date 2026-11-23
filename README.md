@@ -16,7 +16,7 @@
  - It will have a 3D printed enclosure which is going to be portable and small, so you can hide it in your pocket.
 
 ## BOM (Bill of Materials)
- - 1pcs ESP32-C3 (Other ESP32s could be used probably, but I haven't tested yet)
+ - 1pcs ESP32-C3-Super-Mini (Other ESP32s could be used probably, but I haven't tested yet)
  - 1 pcs SSD1306 0.96inch OLED display
  - 5pcs push-buttons
  - 1 pcs custom PCB or breadboard
@@ -55,6 +55,9 @@
 
 ### Overview of new functionalities added to gAssist (Volume control and Presentation Control)
 * https://youtu.be/w5ZUXPo0fjg
+
+### Compiled binary of latest working version 
+* https://github.com/PetrovGD/gAssist/releases/download/releases/firmware.bin
 
 ### Demo of presentation control on gAssist
 * https://youtu.be/Z9RXJxisC2w
