@@ -30,6 +30,8 @@
 
 ## Planned implementations
  - Notifications on Android
+ - Lock/Unlock switch
+ - BLE connection manager (Control paired devices and switch connected device)
 
 ## Screenshots of the project
 
